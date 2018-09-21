@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace shoji_Layout
+namespace shoji_simulation
 {
     public class Node
     {

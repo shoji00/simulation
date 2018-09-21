@@ -23,6 +23,8 @@ namespace shoji_simulation
         public MainWindow()
         {
             InitializeComponent();
+
+            this.DataContext = new MainWindowViewModel(myImage);
         }
     }
 }
