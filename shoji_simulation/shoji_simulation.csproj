@@ -82,6 +82,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Agent.cs" />
+    <Compile Include="Djikstra.cs" />
     <Compile Include="StationLayout.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="Node.cs" />

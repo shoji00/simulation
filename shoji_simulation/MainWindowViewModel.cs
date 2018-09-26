@@ -31,6 +31,11 @@ namespace shoji_simulation
         private Image image_;
 
         ///<summary>
+        ///エージェントのリスト
+        /// </summary>
+        private List<AgentBase> agents_;
+
+        ///<summary>
         ///表示する画像のビットマップ
         ///</summary>
         public RenderTargetBitmap Bitmap { get; set; }
@@ -70,6 +75,8 @@ namespace shoji_simulation
 
             image_ = image;
 
+            agents_ = new List<AgentBase>();
+
             Bitmap = new RenderTargetBitmap(
                 1000,
                 1000,
@@ -106,6 +113,8 @@ namespace shoji_simulation
                         station_ = JsonConvert.DeserializeObject<StationLayoutParam>(json);
 
                         nodes_.Clear();
+
+                        agents_.Clear();
 
                         //ノードの設定  
                         //改札
@@ -219,13 +228,14 @@ namespace shoji_simulation
                         //出口の設定
                         foreach (var goal in station_.Goals)
                         {
-                            nodes_.Add(new Node(goal.PositionX, goal.PositionY, true));
-
-                            double distance = 15;
-                            SetUpNodes(new Node(
-                                goal.PositionX + distance,
-                                goal.PositionY / goal.Height));
+                            nodes_.Add(new Node(goal.PositionX, goal.PositionY,NodeKind.Goal));
                         }
+
+                        //エージェントの設定(座標)
+                        agents_.Add(new AgentBase(700, 500));
+
+
+
 
                         DrawLayout();
 
@@ -387,6 +397,15 @@ namespace shoji_simulation
                     Brushes.Blue,
                     null,
                     new Point(node.X, node.Y), radius, radius);
+            }
+
+            //エージェントの描画
+            foreach (var agent in agents_)
+            {
+                DrawContext.DrawEllipse(
+                    null,
+                    new Pen(Brushes.Green, 1),
+                    new Point(agent.Node.X, agent.Node.Y), agent.Radius, agent.Radius);
             }
 
 
