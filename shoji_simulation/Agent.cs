@@ -24,7 +24,7 @@ namespace shoji_simulation
         ///<summary>
         ///距離のみのコスト
         /// </summary>
-        public double Distance { get; set; } = 0.0;
+        public double DistanceCost { get; set; } = 0.0;
 
         ///<summary>
         ///エージェントの現在ノード

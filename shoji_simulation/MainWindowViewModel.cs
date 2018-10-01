@@ -101,7 +101,7 @@ namespace shoji_simulation
             {
                 fileDialog.Filter = "Json File(.json)|*.json";
                 fileDialog.Title = "開くファイルを選択してください";
-                fileDialog.Multiselect = true ;
+                fileDialog.Multiselect = true;
 
                 //ダイアログを表示する
                 if (fileDialog.ShowDialog() == DialogResult.OK)
@@ -120,15 +120,15 @@ namespace shoji_simulation
                         //改札
                         foreach (var kaisatu in station_.Kaisatus)
                         {
-                            double distance = 15;
+                            double distance = 25;
 
                             SetUpNodes(new Node(
-                                kaisatu.PositionX -distance,
-                                kaisatu.PositionY - distance));
+                                kaisatu[0].PositionX - distance,
+                                kaisatu[0].PositionY - distance));
 
                             SetUpNodes(new Node(
-                                kaisatu.PositionX - distance,
-                                kaisatu.PositionY +kaisatu.Height  + distance));
+                                kaisatu[0].PositionX - distance,
+                                kaisatu[0].PositionY + kaisatu[0].Height + distance));
 
 
                         }
@@ -141,33 +141,33 @@ namespace shoji_simulation
                             //左上
                             SetUpNodes(new Node(
                                 room.PositionX - distance,
-                                room.PositionY  - distance));
+                                room.PositionY - distance));
 
                             //右上
                             SetUpNodes(new Node(
-                                room.PositionX +room.Width + distance,
+                                room.PositionX + room.Width + distance,
                                 room.PositionY - distance));
 
                             //左下
                             SetUpNodes(new Node(
                                 room.PositionX - distance,
-                                room.PositionY +room.Height + distance));
+                                room.PositionY + room.Height + distance));
 
                             //左上
                             SetUpNodes(new Node(
-                                room.PositionX +room.Width + distance,
-                                room.PositionY +room.Height + distance));
+                                room.PositionX + room.Width + distance,
+                                room.PositionY + room.Height + distance));
                         }
 
                         //上に線がある階段
                         foreach (var stairsUp in station_.StairsUp)
                         {
                             double distance = 15;
-                            
+
 
                             SetUpNodes(new Node(
-                                stairsUp.PositionX -distance, 
-                                stairsUp.PositionY -distance));
+                                stairsUp.PositionX - distance,
+                                stairsUp.PositionY - distance));
 
                             SetUpNodes(new Node(
                                 stairsUp.PositionX + stairsUp.Width + distance,
@@ -179,16 +179,16 @@ namespace shoji_simulation
 
                             SetUpNodes(new Node(
                                 stairsUp.PositionX + stairsUp.Width + distance,
-                                stairsUp.PositionY + stairsUp.Height +distance));
+                                stairsUp.PositionY + stairsUp.Height + distance));
 
                             //真ん中上
                             SetUpNodes(new Node(
-                                stairsUp.PositionX + stairsUp.Width/2 ,
-                                stairsUp.PositionY + stairsUp.Height/4 ));
+                                stairsUp.PositionX + stairsUp.Width / 2,
+                                stairsUp.PositionY + stairsUp.Height / 4));
 
                             //真ん中下
                             SetUpNodes(new Node(
-                                stairsUp.PositionX + stairsUp.Width /2,
+                                stairsUp.PositionX + stairsUp.Width / 2,
                                 stairsUp.PositionY + stairsUp.Height + distance));
                         }
 
@@ -216,7 +216,7 @@ namespace shoji_simulation
 
                             //真ん中上
                             SetUpNodes(new Node(
-                                stairsDown.PositionX + stairsDown.Width /2,
+                                stairsDown.PositionX + stairsDown.Width / 2,
                                 stairsDown.PositionY - distance));
 
                             //真ん中上
@@ -228,13 +228,96 @@ namespace shoji_simulation
                         //出口の設定
                         foreach (var goal in station_.Goals)
                         {
-                            nodes_.Add(new Node(goal.PositionX, goal.PositionY,NodeKind.Goal));
+                            nodes_.Add(new Node(goal.PositionX, goal.PositionY, NodeKind.Goal));
                         }
 
                         //エージェントの設定(座標)
                         agents_.Add(new AgentBase(700, 500));
 
+                        //全てのエージェントで移動可能かどうかを調べる
+                        foreach (var agent in agents_)
+                        {
+                            //最初にエージェントの現在地から移動可能な候補を探す
+                            foreach(var node in nodes_)
+                                {
+                                if (Djikstra.IsColidedSomething(agent.Node, node, 25, station_))
+                                {
+                                    agent.Node.NextNodes.Add(node);
+                                }
+                            }
 
+                            Node goalNode = null;
+
+                            while (true)
+                            {
+                                Node determinedNode = null;
+
+                                //ダイクストラ法で探索
+                                agent.Node.DoDiikstra(agent.Node.NextNodes, ref determinedNode);
+
+                                //ゴールにたどり着けないエージェントがいるとき
+                                //エージェントの初期位置がしっかりしていれば起きない
+                                if (determinedNode == null)
+                                {
+                                    throw new Exception("ゴールにいけません");
+                                }
+
+                                //ゴールなら終了
+                                if (determinedNode.NodeStatus == NodeKind.Goal)
+                                {
+                                    goalNode = determinedNode.Clone();
+                                    break;
+                                }
+
+                                //ノードを確定ノードに
+                                determinedNode.NodeStatus = NodeKind.Determined;
+
+                                //確定ノードから移動可能なノードを全てNextNodesに保存
+                                foreach (var node in nodes_)
+                                {
+                                    if (determinedNode == node || node.NodeStatus == NodeKind.Determined)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (Djikstra.IsColidedSomething(determinedNode, node, 25, station_))
+                                    {
+                                        determinedNode.NextNodes.Add(node);
+                                    }
+
+                                }
+                            }
+
+                            ///出口までの経路をエージェントに保持させる
+                            //この後レイアウト内のノードは全て初期化されるのでディープコピーしたものを渡す
+                            //ゴールを見つけた時にゴールノードとゴールまでに通るノードをディープコピーしてあるためここでCloneしなくてよい
+                            while (true)
+                            {
+                                agent.RouteNode.Add(goalNode);
+
+                                goalNode = goalNode.PreviousNode;
+
+                                if (goalNode.NodeStatus == NodeKind.Start)
+                                {
+                                    agent.RouteNode.Reverse();
+                                    break;
+                                }
+                            }
+
+                            //ノードの初期化
+                            foreach (var node in nodes_)
+                            {
+                                node.NextNodes.Clear();
+
+                                if (node.NodeStatus != NodeKind.Goal)
+                                {
+                                    node.NodeStatus = NodeKind.Unsearched;
+                                }
+
+                                node.PreviousNode = null;
+                                node.DistanceCost = double.MaxValue;
+                            }
+                        }
 
 
                         DrawLayout();
@@ -292,7 +375,7 @@ namespace shoji_simulation
                 DrawContext.DrawRectangle(
                     Brushes.Yellow,
                     new Pen(Brushes.Black, 1),
-                    new Rect(kaisatu.PositionX, kaisatu.PositionY, kaisatu.Width, kaisatu.Height));
+                    new Rect(kaisatu[0].PositionX, kaisatu[0].PositionY, kaisatu[0].Width, kaisatu[0].Height));
             }
 
 

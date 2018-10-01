@@ -23,8 +23,14 @@ namespace shoji_simulation
         /// </summary>
         public double Y { get; set; }
 
+        ///<summary>
+        ///現在のノードの１つ前のノード
+        /// </summary>
+        public Node PreviousNode { get; set; }
+
+
         /// <summary>
-        /// 移動候補先のノード
+        /// 移動できる候補のノード
         /// </summary>
         public List<Node> NextNodes { get; set; } = new List<Node>();
 
@@ -48,6 +54,101 @@ namespace shoji_simulation
             NodeStatus = kind;
         }
 
+
+        ///<summary>
+        ///コピーコンストラクタ
+        /// </summary>
+
+        public Node(Node node)
+        {
+            NodeStatus = node.NodeStatus;
+
+            X = node.X;
+            Y = node.Y;
+
+            Radius = node.Radius;
+
+            DistanceCost = node.DistanceCost;
+
+            PreviousNode = node.PreviousNode?.Clone();
+        }
+
+        ///<summary>
+        ///ダイクストラ法を用いた探索
+        /// </summary>
+        ///
+        ///<remarks>再起関数</remarks>
+
+        public void DoDiikstra(List<Node> nodes, ref Node fixedNode)
+        {
+            foreach (var node in nodes)
+            {
+                if (this == node)
+                {
+                    continue;
+                }
+                else if (node.NodeStatus == NodeKind.Determined)
+                {
+                    if (node.NextNodes.Count() == 0)
+                    {
+                        break;
+                    }
+
+                    if (node.PreviousNode != this)
+                    {
+                        continue;
+                    }
+                }
+
+                else
+                {
+                    var temporaryCost = CalculateCost(node);
+
+                    if (fixedNode == null)
+                    {
+                        fixedNode = node;
+                        node.DistanceCost = temporaryCost;
+                        node.PreviousNode = this;
+                    }
+                    else if (fixedNode.DistanceCost > temporaryCost)
+                    {
+                        fixedNode = node;
+                    }
+                    else if (node.DistanceCost > temporaryCost)
+                    {
+                        node.DistanceCost = temporaryCost;
+                        node.PreviousNode = this;
+
+                    }
+                }
+            }
+
+        }
+
+
+        ///<summary>
+        ///コスト計算
+        /// </summary>
+
+        private double CalculateCost(Node node)
+        {
+            if (DistanceCost >= 100000)
+            {
+                return this.DistanceFromNode(node);
+            }
+
+            return DistanceCost + this.DistanceFromNode(node);
+
+        }
+
+        ///<summary>
+        ///ディープコピー
+        /// </summary>
+        /// <return>コピーしたノード</return>
+        public Node Clone()
+        {
+            return new Node(this);
+        }
     }
 
     /// <summary>
@@ -55,12 +156,12 @@ namespace shoji_simulation
     /// </summary>
     public static class NodeExpansion
     {
-       /// <summary>
-       /// ノード間の距離を計算
-       /// </summary>
-       /// <param name="node1">自身のノード</param>
-       /// <param name="node2">ノード</param>
-       /// <returns></returns>
+        /// <summary>
+        /// ノード間の距離を計算
+        /// </summary>
+        /// <param name="node1">自身のノード</param>
+        /// <param name="node2">ノード</param>
+        /// <returns></returns>
         public static double DistanceFromNode(this Node node1, Node node2)
         {
             return Math.Sqrt(
@@ -83,7 +184,7 @@ namespace shoji_simulation
         ///<summary>
         ///確定
         /// </summary>
-        Determind,
+        Determined,
 
         ///<summary>
         ///スタート

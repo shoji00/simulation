@@ -320,7 +320,7 @@ namespace shoji_simulation
         /// <summary>
         /// 改札のリスト）
         /// </summary>
-        public List<StationKaisatuParam> Kaisatus { get; set; } = new List<StationKaisatuParam>();
+        public List<List<StationKaisatuParam>> Kaisatus { get; set; } = new List<List<StationKaisatuParam>>();
 
         /// <summary>
         /// 駅員室のリスト）
