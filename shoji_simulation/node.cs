@@ -79,14 +79,16 @@ namespace shoji_simulation
         ///
         ///<remarks>再起関数</remarks>
 
-        public void DoDiikstra(List<Node> nodes, ref Node fixedNode)
+        public void DoDijikstra(List<Node> nodes, ref Node fixedNode)
         {
+            //自分を含めると無限ループの可能性がある
             foreach (var node in nodes)
             {
                 if (this == node)
                 {
                     continue;
                 }
+                //確定ノードの場合はさらにその先まで探索する
                 else if (node.NodeStatus == NodeKind.Determined)
                 {
                     if (node.NextNodes.Count() == 0)
@@ -94,14 +96,20 @@ namespace shoji_simulation
                         break;
                     }
 
+                    //確定したルート通りでないと探索が終わらない
                     if (node.PreviousNode != this)
                     {
                         continue;
                     }
-                }
 
+                    //
+                    node.DoDijikstra(node.NextNodes, ref fixedNode);
+                }
+                //確定ノードではないときはコスト計算を行う
                 else
                 {
+                    //コスト計算
+                    //　TODO 距離以外も用いた計算の実装
                     var temporaryCost = CalculateCost(node);
 
                     if (fixedNode == null)
@@ -113,6 +121,8 @@ namespace shoji_simulation
                     else if (fixedNode.DistanceCost > temporaryCost)
                     {
                         fixedNode = node;
+                        node.DistanceCost = temporaryCost;
+                        node.PreviousNode = this;
                     }
                     else if (node.DistanceCost > temporaryCost)
                     {
@@ -132,6 +142,7 @@ namespace shoji_simulation
 
         private double CalculateCost(Node node)
         {
+            //100000に意味はなく大きければよし
             if (DistanceCost >= 100000)
             {
                 return this.DistanceFromNode(node);

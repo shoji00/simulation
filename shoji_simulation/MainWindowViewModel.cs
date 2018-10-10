@@ -60,6 +60,7 @@ namespace shoji_simulation
         /// Xamlデザイナー用のコンストラクタ
         /// </summary>
         public MainWindowViewModel()
+            : this(new Image())
         {
         }
 
@@ -101,7 +102,7 @@ namespace shoji_simulation
             {
                 fileDialog.Filter = "Json File(.json)|*.json";
                 fileDialog.Title = "開くファイルを選択してください";
-                fileDialog.Multiselect = true;
+                fileDialog.Multiselect = false;
 
                 //ダイアログを表示する
                 if (fileDialog.ShowDialog() == DialogResult.OK)
@@ -123,12 +124,12 @@ namespace shoji_simulation
                             double distance = 25;
 
                             SetUpNodes(new Node(
-                                kaisatu[0].PositionX - distance,
-                                kaisatu[0].PositionY - distance));
+                                kaisatu.PositionX - distance,
+                                kaisatu.PositionY - distance));
 
                             SetUpNodes(new Node(
-                                kaisatu[0].PositionX - distance,
-                                kaisatu[0].PositionY + kaisatu[0].Height + distance));
+                                kaisatu.PositionX - distance,
+                                kaisatu.PositionY + kaisatu.Height + distance));
 
 
                         }
@@ -232,7 +233,7 @@ namespace shoji_simulation
                         }
 
                         //エージェントの設定(座標)
-                        agents_.Add(new AgentBase(700, 500));
+                        agents_.Add(new AgentBase(500, 500));
 
                         //全てのエージェントで移動可能かどうかを調べる
                         foreach (var agent in agents_)
@@ -253,7 +254,7 @@ namespace shoji_simulation
                                 Node determinedNode = null;
 
                                 //ダイクストラ法で探索
-                                agent.Node.DoDiikstra(agent.Node.NextNodes, ref determinedNode);
+                                agent.Node.DoDijikstra(agent.Node.NextNodes, ref determinedNode);
 
                                 //ゴールにたどり着けないエージェントがいるとき
                                 //エージェントの初期位置がしっかりしていれば起きない
@@ -280,7 +281,7 @@ namespace shoji_simulation
                                         continue;
                                     }
 
-                                    if (Djikstra.IsColidedSomething(determinedNode, node, 25, station_))
+                                    if (Djikstra.IsColidedSomething(determinedNode, node, 10, station_))
                                     {
                                         determinedNode.NextNodes.Add(node);
                                     }
@@ -375,7 +376,7 @@ namespace shoji_simulation
                 DrawContext.DrawRectangle(
                     Brushes.Yellow,
                     new Pen(Brushes.Black, 1),
-                    new Rect(kaisatu[0].PositionX, kaisatu[0].PositionY, kaisatu[0].Width, kaisatu[0].Height));
+                    new Rect(kaisatu.PositionX, kaisatu.PositionY, kaisatu.Width, kaisatu.Height));
             }
 
 
@@ -489,6 +490,15 @@ namespace shoji_simulation
                     null,
                     new Pen(Brushes.Green, 1),
                     new Point(agent.Node.X, agent.Node.Y), agent.Radius, agent.Radius);
+
+                //経路の線
+                foreach(var node in agent.RouteNode)
+                {
+                    DrawContext.DrawLine(
+                        new Pen(Brushes.Red, 10),
+                        new Point(node.PreviousNode.X, node.PreviousNode.Y),
+                        new Point(node.X, node.Y));
+                }
             }
 
 

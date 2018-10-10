@@ -14,7 +14,7 @@ namespace shoji_simulation
         ///<summary>
         ///エージェントの半径
         /// </summary>
-        public double Radius{get; set;} = 25.0;
+        public double Radius{get; set;} = 10.0;
 
         ///<summary>
         ///エージェントの速度

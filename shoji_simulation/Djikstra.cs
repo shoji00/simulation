@@ -90,10 +90,8 @@ namespace shoji_simulation
         {
             bool t1, t2;
 
-            foreach(var kaisatus in station.Kaisatus)
+            foreach(var kaisatu in station.Kaisatus)
             {
-                foreach(var kaisatu in kaisatus)
-                {
                     //改札の上辺
                     var p1 = new Point(kaisatu.PositionX - (kaisatu.Width), kaisatu.PositionY -(kaisatu.Height / 2));
                     var p2 = new Point(kaisatu.PositionX + (kaisatu.Width), kaisatu.PositionY - (kaisatu.Height / 2));
@@ -142,7 +140,7 @@ namespace shoji_simulation
                         return true;
                     }
 
-                }
+                
             }
 
             return false;
