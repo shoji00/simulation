@@ -78,6 +78,9 @@ namespace shoji_simulation
         /// </summary>
         ///
         ///<remarks>再起関数</remarks>
+        ///
+        ///<param name="nodes">移動候補先すべてのノード</param>
+        ///<param name="fixedNode"> 確定ノードの保存先</param>
 
         public void DoDijikstra(List<Node> nodes, ref Node fixedNode)
         {
@@ -102,7 +105,7 @@ namespace shoji_simulation
                         continue;
                     }
 
-                    //
+                    //ダイクストラで探索
                     node.DoDijikstra(node.NextNodes, ref fixedNode);
                 }
                 //確定ノードではないときはコスト計算を行う

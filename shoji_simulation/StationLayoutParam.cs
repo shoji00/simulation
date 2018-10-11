@@ -259,49 +259,6 @@ namespace shoji_simulation
     }
 
     /// <summary>
-    /// 柱の情報クラス
-    /// </summary>
-    public class StationPillarParam
-    {
-        /// <summary>
-        /// 柱の横幅
-        /// </summary>
-        public double Width { get; set; }
-
-        /// <summary>
-        /// 柱の縦幅
-        /// </summary>
-        public double Height { get; set; }
-
-        /// <summary>
-        /// 柱のX座標
-        /// </summary>
-        public double PositionX { get; set; }
-
-        /// <summary>
-        /// 柱のY座標
-        /// </summary>
-        public double PositionY { get; set; }
-
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        /// <param name="width">柱の縦幅</param>
-        /// <param name="height">柱の横幅</param>
-        /// <param name="positionX">柱のX座標</param>
-        /// <param name="positionY">柱のY座標</param>
-        public StationPillarParam(double width, double height, double positionX, double positionY)
-        {
-            Height = height;
-            Width = width;
-            PositionX = positionX;
-            PositionY = positionY;
-        }
-
-    }
-
-
-    /// <summary>
     /// 駅のレイアウトクラス
     /// </summary>
     public class StationLayoutParam
@@ -346,11 +303,6 @@ namespace shoji_simulation
         /// ベンチのリスト）
         /// </summary>
         public List<StationBenchParam> Benchs { get; set; } = new List<StationBenchParam>();
-
-        /// <summary>
-        /// 柱のリスト
-        /// </summary>
-        public List<StationPillarParam> Pillars { get; set; } = new List<StationPillarParam>();
 
     }
 

@@ -38,7 +38,7 @@ namespace shoji_simulation
 
             double theta = Math.Atan2(y2 - y1, x2 - x1);
 
-            //上辺
+            //改札上辺
             if (CheckCollisionDeterminationWithAllkaisatu(
                 new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
                 new Point(x2 - tolerance * Math.Sin(theta), y2 + tolerance * Math.Cos(theta)),
@@ -74,6 +74,45 @@ namespace shoji_simulation
                 return false;
             }
 
+
+
+            //駅員室上辺
+            if (CheckCollisionDeterminationWithAllroom(
+                new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
+                new Point(x2 - tolerance * Math.Sin(theta), y2 + tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+            //右辺
+            if (CheckCollisionDeterminationWithAllroom(
+                new Point(x2 - tolerance * Math.Sin(theta), y2 + tolerance * Math.Cos(theta)),
+                new Point(x2 + tolerance * Math.Sin(theta), y2 - tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+            //下辺
+            if (CheckCollisionDeterminationWithAllroom(
+                new Point(x2 + tolerance * Math.Sin(theta), y2 - tolerance * Math.Cos(theta)),
+                new Point(x1 + tolerance * Math.Sin(theta), y1 - tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+
+            //左辺
+            if (CheckCollisionDeterminationWithAllroom(
+                new Point(x1 + tolerance * Math.Sin(theta), y1 - tolerance * Math.Cos(theta)),
+                new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -86,6 +125,7 @@ namespace shoji_simulation
         /// true:衝突してる
         /// false:衝突してない
         /// </returns>
+        /// 改札
         private static bool CheckCollisionDeterminationWithAllkaisatu(Point r1, Point r2, StationLayoutParam station)
         {
             bool t1, t2;
@@ -93,8 +133,8 @@ namespace shoji_simulation
             foreach(var kaisatu in station.Kaisatus)
             {
                     //改札の上辺
-                    var p1 = new Point(kaisatu.PositionX - (kaisatu.Width), kaisatu.PositionY -(kaisatu.Height / 2));
-                    var p2 = new Point(kaisatu.PositionX + (kaisatu.Width), kaisatu.PositionY - (kaisatu.Height / 2));
+                    var p1 = new Point(kaisatu.PositionX - (kaisatu.Width / 2), kaisatu.PositionY -(kaisatu.Height / 2));
+                    var p2 = new Point(kaisatu.PositionX + (kaisatu.Width / 2), kaisatu.PositionY - (kaisatu.Height / 2));
 
                     t1 = CheckCollisionSide(r1, r2, p1, p2);
                     t2 = CheckCollisionSide(p1, p2, r1, r2);
@@ -105,8 +145,8 @@ namespace shoji_simulation
                     }
 
                     //改札の右辺
-                     p1 = new Point(kaisatu.PositionX + (kaisatu.Width), kaisatu.PositionY - (kaisatu.Height / 2));
-                     p2 = new Point(kaisatu.PositionX + (kaisatu.Width), kaisatu.PositionY + (kaisatu.Height / 2));
+                     p1 = new Point(kaisatu.PositionX + (kaisatu.Width / 2), kaisatu.PositionY - (kaisatu.Height / 2));
+                     p2 = new Point(kaisatu.PositionX + (kaisatu.Width / 2), kaisatu.PositionY + (kaisatu.Height / 2));
 
                     t1 = CheckCollisionSide(r1, r2, p1, p2);
                     t2 = CheckCollisionSide(p1, p2, r1, r2);
@@ -117,8 +157,8 @@ namespace shoji_simulation
                     }
 
                     //改札の下辺
-                     p1 = new Point(kaisatu.PositionX + (kaisatu.Width), kaisatu.PositionY + (kaisatu.Height / 2));
-                     p2 = new Point(kaisatu.PositionX - (kaisatu.Width), kaisatu.PositionY + (kaisatu.Height / 2));
+                     p1 = new Point(kaisatu.PositionX + (kaisatu.Width / 2), kaisatu.PositionY + (kaisatu.Height / 2));
+                     p2 = new Point(kaisatu.PositionX - (kaisatu.Width / 2), kaisatu.PositionY + (kaisatu.Height / 2));
 
                     t1 = CheckCollisionSide(r1, r2, p1, p2);
                     t2 = CheckCollisionSide(p1, p2, r1, r2);
@@ -129,8 +169,8 @@ namespace shoji_simulation
                     }
 
                     //改札の左辺
-                     p1 = new Point(kaisatu.PositionX - (kaisatu.Width), kaisatu.PositionY + (kaisatu.Height / 2));
-                     p2 = new Point(kaisatu.PositionX - (kaisatu.Width), kaisatu.PositionY - (kaisatu.Height / 2));
+                     p1 = new Point(kaisatu.PositionX - (kaisatu.Width / 2), kaisatu.PositionY + (kaisatu.Height / 2));
+                     p2 = new Point(kaisatu.PositionX - (kaisatu.Width / 2), kaisatu.PositionY - (kaisatu.Height / 2));
 
                     t1 = CheckCollisionSide(r1, r2, p1, p2);
                     t2 = CheckCollisionSide(p1, p2, r1, r2);
@@ -145,6 +185,71 @@ namespace shoji_simulation
 
             return false;
         }
+
+
+        //駅員室
+        private static bool CheckCollisionDeterminationWithAllroom(Point r1, Point r2, StationLayoutParam station)
+        {
+            bool t1, t2;
+
+            foreach (var room in station.Rooms)
+            {
+                //駅員室の上辺
+                var p1 = new Point(room.PositionX - (room.Width), room.PositionY - (room.Height / 2));
+                var p2 = new Point(room.PositionX + (room.Width), room.PositionY - (room.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //駅員室の右辺
+                p1 = new Point(room.PositionX + (room.Width), room.PositionY - (room.Height / 2));
+                p2 = new Point(room.PositionX + (room.Width), room.PositionY + (room.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //駅員室の下辺
+                p1 = new Point(room.PositionX + (room.Width), room.PositionY + (room.Height / 2));
+                p2 = new Point(room.PositionX - (room.Width), room.PositionY + (room.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //駅員室の左辺
+                p1 = new Point(room.PositionX - (room.Width), room.PositionY + (room.Height / 2));
+                p2 = new Point(room.PositionX - (room.Width), room.PositionY - (room.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+
+            }
+
+            return false;
+        }
+
+
+
 
 
 

@@ -124,12 +124,12 @@ namespace shoji_simulation
                             double distance = 25;
 
                             SetUpNodes(new Node(
-                                kaisatu.PositionX - distance,
-                                kaisatu.PositionY - distance));
+                                kaisatu.PositionX -  (kaisatu.Width / 2) - distance,
+                                kaisatu.PositionY - (kaisatu.Height / 2) - distance));
 
                             SetUpNodes(new Node(
-                                kaisatu.PositionX - distance,
-                                kaisatu.PositionY + kaisatu.Height + distance));
+                                kaisatu.PositionX - (kaisatu.Width / 2)  - distance,
+                                kaisatu.PositionY + (kaisatu.Height / 2) + distance));
 
 
                         }
@@ -141,23 +141,23 @@ namespace shoji_simulation
 
                             //左上
                             SetUpNodes(new Node(
-                                room.PositionX - distance,
-                                room.PositionY - distance));
+                                room.PositionX　- (room.Width / 2) - distance,
+                                room.PositionY - (room.Height / 2) - distance));
 
                             //右上
                             SetUpNodes(new Node(
-                                room.PositionX + room.Width + distance,
-                                room.PositionY - distance));
+                                room.PositionX + room.Width + (room.Width / 2) + distance,
+                                room.PositionY -(room.Height / 2) - distance));
 
                             //左下
                             SetUpNodes(new Node(
-                                room.PositionX - distance,
-                                room.PositionY + room.Height + distance));
+                                room.PositionX -(room.Width / 2) -  distance,
+                                room.PositionY + room.Height + (room.Height / 2) + distance));
 
                             //左上
                             SetUpNodes(new Node(
-                                room.PositionX + room.Width + distance,
-                                room.PositionY + room.Height + distance));
+                                room.PositionX + room.Width + (room.Width / 2) + distance,
+                                room.PositionY + room.Height +(room.Height / 2) + distance));
                         }
 
                         //上に線がある階段
@@ -233,7 +233,7 @@ namespace shoji_simulation
                         }
 
                         //エージェントの設定(座標)
-                        agents_.Add(new AgentBase(500, 500));
+                        agents_.Add(new AgentBase(150, 700));
 
                         //全てのエージェントで移動可能かどうかを調べる
                         foreach (var agent in agents_)
@@ -281,7 +281,7 @@ namespace shoji_simulation
                                         continue;
                                     }
 
-                                    if (Djikstra.IsColidedSomething(determinedNode, node, 10, station_))
+                                    if (Djikstra.IsColidedSomething(determinedNode, node, 25, station_))
                                     {
                                         determinedNode.NextNodes.Add(node);
                                     }
@@ -463,16 +463,6 @@ namespace shoji_simulation
                     null,
                     new Rect(bench.PositionX, bench.PositionY, bench.Width, bench.Height));
             }
-
-            //柱の描画
-            foreach (var pillar in station_.Pillars)
-            {
-                DrawContext.DrawRectangle(
-                    Brushes.Blue,
-                    null,
-                    new Rect(pillar.PositionX, pillar.PositionY, pillar.Width, pillar.Height));
-            }
-
 
             //ノードの描画
             foreach (var node in nodes_)
