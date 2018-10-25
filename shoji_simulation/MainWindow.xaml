@@ -21,6 +21,13 @@
                 Width="100"
                 Command="{Binding LoadLayoutCommand}" />
 
+        <Button Content="Move"
+                Margin="10,10,0,0"
+                HorizontalAlignment="Left"
+                Height="30"
+                Width="100"
+                Command="{Binding MoveCommand}" />
+
         </StackPanel>
     </Grid>
 </Window>

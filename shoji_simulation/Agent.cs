@@ -9,17 +9,27 @@ namespace shoji_simulation
     ///<summary>
     ///エージェントのBaseクラス
     /// </summary>
-    class AgentBase
+    public class AgentBase
     {
         ///<summary>
         ///エージェントの半径
         /// </summary>
-        public double Radius{get; set;} = 10.0;
+        public double Radius{get; set;} = 25;
 
         ///<summary>
-        ///エージェントの速度
+        ///普通のエージェントの速度[m/s]
         /// </summary>
-        public double Speed { get; set; } = 15.0;
+        public double Speed { get; set; } = 1.5;
+
+        ///<summary>
+        ///遅いエージェントの速度[m/s]
+        /// </summary>
+        public double DownSpeed { get; set; } = 1.2;
+
+        ///<summary>
+        ///狭い通路での移動速度[m/s]
+        /// </summary>
+        public double SpeedNarrow { get; set; } = 1.0;
 
         ///<summary>
         ///距離のみのコスト
@@ -36,6 +46,11 @@ namespace shoji_simulation
         /// </summary>
         public List<Node> RouteNode { get; set; } = new List<Node>();
 
+        ///<summary>
+        ///自分を含めたエージェントのリスト
+        /// </summary>
+        public List<AgentBase> Agents { get; set; } = new List<AgentBase>();
+
         //
         ///<summary>
         ///コンストラクタ
@@ -48,5 +63,63 @@ namespace shoji_simulation
             Node = new Node(x, y, NodeKind.Start);
         }
 
+
+        ///<summary>
+        ///移動
+        /// </summary>
+        ///<param name="node">移動先のノード</param>
+        ///<returns>
+        ///true:ノードに到着した
+        ///false:ノードに到着してない
+        /// </returns>
+        
+        public bool MoveTo(Node node)
+        {
+            ///<param name="distance">距離</param>
+            var distance = this.Node.DistanceFromNode(node);
+            //1ステップは0.5秒なので2で割る
+            ///<param name="movableDistance">移動可能な距離</param>
+            var movableDistance = this.Speed * 100 / 2;
+            var theta = Math.Atan2(node.Y - this.Node.Y, node.X - this.Node.X);
+
+            var PositionX = this.Node.X;
+            var PositionY = this.Node.Y;
+
+            if(movableDistance > distance)
+            {
+                this.Node.X = node.X;
+                this.Node.Y = node.Y;
+            }
+            else
+            {
+                var magnification = movableDistance / distance;
+
+                this.Node.X += magnification * distance * Math.Cos(theta);
+                this.Node.Y += magnification * distance * Math.Sin(theta);
+            }
+
+            foreach(var agent in Agents)
+            {
+                if(agent == this)
+                {
+                    continue;
+                }
+
+                if(this.Node.DistanceFromNode(agent.Node) < this.Radius + agent.Radius)
+                {
+                    this.Node.X = PositionX;
+                    this.Node.Y = PositionY;
+                }
+            }
+
+            if(this.Node.DistanceFromNode(node) < this.Radius / 2)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

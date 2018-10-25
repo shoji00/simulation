@@ -83,6 +83,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Agent.cs" />
+    <Compile Include="induction.cs" />
     <Compile Include="Djikstra.cs" />
     <Compile Include="StationLayoutParam.cs" />
     <Compile Include="MainWindowViewModel.cs" />

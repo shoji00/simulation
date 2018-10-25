@@ -36,6 +36,11 @@ namespace shoji_simulation
         private List<AgentBase> agents_;
 
         ///<summary>
+        ///駅員のリスト
+        /// </summary>
+        private List<AgentBase> ekiin_;
+
+        ///<summary>
         ///表示する画像のビットマップ
         ///</summary>
         public RenderTargetBitmap Bitmap { get; set; }
@@ -54,6 +59,11 @@ namespace shoji_simulation
         ///レイアウトを読み込むコマンド
         /// </summary>
         public ReactiveCommand LoadLayoutCommand { get; set; }
+
+        ///<summary>
+        ///移動を読み込むコマンド
+        /// </summary>
+        public ReactiveCommand MoveCommand { get; set; }
 
 
         /// <summary>
@@ -78,6 +88,8 @@ namespace shoji_simulation
 
             agents_ = new List<AgentBase>();
 
+            ekiin_ = new List<AgentBase>();
+
             Bitmap = new RenderTargetBitmap(
                 1000,
                 1000,
@@ -91,13 +103,52 @@ namespace shoji_simulation
 
             LoadLayoutCommand.Subscribe(_ => OpenFile());
 
+            MoveCommand = new ReactiveCommand();
+
+            MoveCommand.Subscribe(_ => Move());
+
         }
+
+        ///<summary>
+        ///移動
+        /// </summary>
+        public void Move()
+        {
+            var removeAgent = new List<AgentBase>();
+
+            foreach(var agent in agents_)
+            {
+                if(agent.MoveTo(agent.RouteNode.First()))
+                {
+                    agent.RouteNode.Remove(agent.RouteNode.First());
+                }
+                
+                if(agent.RouteNode.Count() == 0)
+                {
+                    removeAgent.Add(agent);
+                }
+
+
+            }
+
+            foreach(var remove in removeAgent)
+            {
+                agents_.Remove(remove);
+            }
+
+            DrawLayout();
+        }
+
 
         /// <summary>
         /// Jsonファイルからレイアウト情報を読み込む関数
         /// </summary>
         public void OpenFile()
         {
+                // 駅員の座標
+            int ekiinX = 700;
+            int ekiinY = 700;
+
             using (var fileDialog = new OpenFileDialog())
             {
                 fileDialog.Filter = "Json File(.json)|*.json";
@@ -116,6 +167,8 @@ namespace shoji_simulation
                         nodes_.Clear();
 
                         agents_.Clear();
+
+                        ekiin_.Clear();
 
                         //ノードの設定  
                         //改札
@@ -182,10 +235,10 @@ namespace shoji_simulation
                                 stairsUp.PositionX + stairsUp.Width + distance,
                                 stairsUp.PositionY + stairsUp.Height + distance));
 
-                            //真ん中上
-                            SetUpNodes(new Node(
+                            //仮ゴール
+                            nodes_.Add(new Node(
                                 stairsUp.PositionX + stairsUp.Width / 2,
-                                stairsUp.PositionY + stairsUp.Height / 4));
+                                stairsUp.PositionY + stairsUp.Height / 4, NodeKind.Temporary1));
 
                             //真ん中下
                             SetUpNodes(new Node(
@@ -220,10 +273,10 @@ namespace shoji_simulation
                                 stairsDown.PositionX + stairsDown.Width / 2,
                                 stairsDown.PositionY - distance));
 
-                            //真ん中上
-                            SetUpNodes(new Node(
+                            //仮ゴール
+                            nodes_.Add(new Node(
                                 stairsDown.PositionX + stairsDown.Width / 2,
-                                stairsDown.PositionY + stairsDown.Height - distance));
+                                stairsDown.PositionY + stairsDown.Height - distance,NodeKind.Temporary2));
                         }
 
                         //出口の設定
@@ -233,14 +286,16 @@ namespace shoji_simulation
                         }
 
                         //エージェントの設定(座標)
-                        agents_.Add(new AgentBase(150, 700));
+                        agents_.Add(new AgentBase(800, 800));
+                        
+                        ekiin_.Add(new AgentBase(ekiinX, ekiinY));
 
                         //全てのエージェントで移動可能かどうかを調べる
                         foreach (var agent in agents_)
                         {
                             //最初にエージェントの現在地から移動可能な候補を探す
                             foreach(var node in nodes_)
-                                {
+                            {
                                 if (Djikstra.IsColidedSomething(agent.Node, node, 25, station_))
                                 {
                                     agent.Node.NextNodes.Add(node);
@@ -253,12 +308,40 @@ namespace shoji_simulation
                             {
                                 Node determinedNode = null;
 
-                                //ダイクストラ法で探索
-                                agent.Node.DoDijikstra(agent.Node.NextNodes, ref determinedNode);
 
+                                //ダイクストラ法で探索
+                                agent.Node.DoDijikstra(agent.Node.NextNodes, ref determinedNode, agent, agents_);
+
+                                //狭い通路での探索
+                               agent.Node.DoDijikstra(agent.Node.NextNodesWithNarrow, ref determinedNode, agent, agents_, true);
+
+                                //誘導範囲内
+                                  if ( Math.Pow((ekiinX - agent.Node.X), 2) + Math.Pow((ekiinY-agent.Node.Y),2) <= Math.Pow(200,2))
+                                  {
+                                    //ダイクストラ法で探索
+                                     agent.Node.DoDijikstra(agent.Node.NextNodes, ref determinedNode, agent, agents_);
+                                  }
+
+                                //1Fにいるエージェントが階段を使って2Fにいく
+                                //上に線がある階段
+                                
+                                if (determinedNode.NodeStatus == NodeKind.Temporary1)
+                                {
+                                    agent.Node.X = 300;
+                                    agent.Node.Y = 300;
+                                }
+ 
+                                //下に線がある階段
+                                if (determinedNode.NodeStatus == NodeKind.Temporary2)
+                                {
+                                    //エージェントの座標を上の階段に変更する
+                                    agent.Node.X = 300;
+                                    agent.Node.Y = 300;
+                                    }
+                                
                                 //ゴールにたどり着けないエージェントがいるとき
                                 //エージェントの初期位置がしっかりしていれば起きない
-                                if (determinedNode == null)
+                                 if (determinedNode == null)
                                 {
                                     throw new Exception("ゴールにいけません");
                                 }
@@ -491,9 +574,21 @@ namespace shoji_simulation
                 }
             }
 
+            //駅員の描画
+            foreach (var ekiin in ekiin_)
+            {
+                DrawContext.DrawEllipse(
+                    null,
+                    new Pen(Brushes.Purple, 1),
+                    new Point(ekiin.Node.X, ekiin.Node.Y), ekiin.Radius, ekiin.Radius);
 
+                DrawContext.DrawEllipse(
+                    null,
+                    new Pen(Brushes.Orange, 1),
+                    new Point(ekiin.Node.X, ekiin.Node.Y), 200,200);
+            }
 
-            DrawContext.Close();
+                DrawContext.Close();
 
             //表示する画像を更新 
             Bitmap.Render(DrawVisual);

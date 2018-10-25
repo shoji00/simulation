@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace shoji_simulation
 {
@@ -33,6 +34,12 @@ namespace shoji_simulation
         /// 移動できる候補のノード
         /// </summary>
         public List<Node> NextNodes { get; set; } = new List<Node>();
+
+        /// <summary>
+        /// 移動できる狭い通路のノード候補
+        /// </summary>
+        public List<Node> NextNodesWithNarrow { get; set; } = new List<Node>();
+
 
         /// <summary>
         /// ノードの半径
@@ -82,7 +89,8 @@ namespace shoji_simulation
         ///<param name="nodes">移動候補先すべてのノード</param>
         ///<param name="fixedNode"> 確定ノードの保存先</param>
 
-        public void DoDijikstra(List<Node> nodes, ref Node fixedNode)
+        public void DoDijikstra(List<Node> nodes, ref Node fixedNode, 
+            AgentBase agent, List<AgentBase> agents, bool narrow = false)
         {
             //自分を含めると無限ループの可能性がある
             foreach (var node in nodes)
@@ -106,14 +114,54 @@ namespace shoji_simulation
                     }
 
                     //ダイクストラで探索
-                    node.DoDijikstra(node.NextNodes, ref fixedNode);
+                    node.DoDijikstra(node.NextNodes, ref fixedNode , agent, agents);
+                    //狭い通路の探索
+                    node.DoDijikstra(node.NextNodesWithNarrow, ref fixedNode, agent, agents, true);
                 }
                 //確定ノードではないときはコスト計算を行う
                 else
                 {
                     //コスト計算
                     //　TODO 距離以外も用いた計算の実装
-                    var temporaryCost = CalculateCost(node);
+                    double temporaryCost;
+
+                    if(narrow)
+                    {
+                        temporaryCost = CalculateCostNarrow(node, agent);
+                    }
+                    else
+                    {
+                        temporaryCost = CalculateCost(node);
+                        //ノード間の距離を水平に保つように回転させる
+                        //Atan2では水平での角度を見ているため戻す場合はマイナスする
+                        var theta = -Math.Atan2(this.Y - node.Y, this.X - node.X);
+
+                        var Point = Rotate2D(node, this, theta);
+
+                        Point.Y += 25;
+
+                        var rect = new Rect(new Point(this.X, this.Y - 25), Point);
+
+                        int count = 0;
+
+                        foreach (var anotherAgent in agents)
+                        {
+                            if (anotherAgent == agent)
+                            {
+                                continue;
+                            }
+
+                            if (rect.Contains(Rotate2D(anotherAgent.Node, this, theta)))
+                            {
+                                count++;
+                            }
+                        }
+
+                        if ((count * 100) / this.DistanceFromNode(node) > 2)
+                        {
+                            temporaryCost += count * 100;
+                        }
+                    }
 
                     if (fixedNode == null)
                     {
@@ -154,6 +202,55 @@ namespace shoji_simulation
             return DistanceCost + this.DistanceFromNode(node);
 
         }
+
+        //---------------------------------------
+        ///<summary>
+        ///細い通路のコスト計算
+        /// </summary>
+        /// <param name="agent">エージェント</param>
+        /// <param name="node">移動先のノード</param>
+        //---------------------------------------
+        private double CalculateCostNarrow(Node node , AgentBase agent)
+        {
+            if(DistanceCost >= 100000)
+            {
+                return ((agent.Speed / agent.SpeedNarrow)) * this.DistanceFromNode(node);
+            }
+            return DistanceCost + ((agent.Speed / agent.SpeedNarrow))+ this.DistanceFromNode(node);
+        }
+
+
+
+
+        //---------------------------------------
+        ///<summary>
+        ///座標を回転させる関数
+        /// </summary>
+        /// <param name="center">回転の中心となるノード</param>
+        /// <param name="node">回転させたいノード</param>
+        /// <param name="theta">回転角度</param>
+        //----------------------------------------
+        private Point Rotate2D(Node node, Node center, double theta)
+        {
+            var x = node.X;
+            var y = node.Y;
+            var centerX = center.X;
+            var centerY = center.Y;
+
+            //数学座標と同じにする
+            y = -y;
+            centerY = -centerY;
+
+            var result = new Point
+            {
+                X = (x - centerX) * Math.Cos(theta) - (y - centerY) * Math.Sin(theta) + centerX,
+                Y = -1.0 * ((x - centerX) * Math.Sin(theta) + (y - centerY) * Math.Cos(theta) + centerY)
+            };
+
+            return result;
+        }
+
+
 
         ///<summary>
         ///ディープコピー
@@ -208,7 +305,19 @@ namespace shoji_simulation
         ///<summary>
         ///ゴール
         /// </summary>
-        Goal
+        Goal,
+
+        ///<summary>
+        ///線が下にある階段の仮ゴール
+        /// </summary>
+        Temporary1,
+    
+
+        ///<summary>
+        ///線が上にある階段の仮ゴール
+        /// </summary>
+        Temporary2
+
     }
 
 }

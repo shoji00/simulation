@@ -38,6 +38,9 @@ namespace shoji_simulation
 
             double theta = Math.Atan2(y2 - y1, x2 - x1);
 
+            var sin = tolerance * Math.Sin(theta);
+            var cos = tolerance * Math.Cos(theta);
+
             //改札上辺
             if (CheckCollisionDeterminationWithAllkaisatu(
                 new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
@@ -112,6 +115,45 @@ namespace shoji_simulation
             {
                 return false;
             }
+
+            //中央の線
+            //上辺
+            if (CheckCollisionDeterminationWithAllBench(
+                new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
+                new Point(x2 - tolerance * Math.Sin(theta), y2 + tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+            //右辺
+            if (CheckCollisionDeterminationWithAllBench(
+                new Point(x2 - tolerance * Math.Sin(theta), y2 + tolerance * Math.Cos(theta)),
+                new Point(x2 + tolerance * Math.Sin(theta), y2 - tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+            //下辺
+            if (CheckCollisionDeterminationWithAllBench(
+                new Point(x2 + tolerance * Math.Sin(theta), y2 - tolerance * Math.Cos(theta)),
+                new Point(x1 + tolerance * Math.Sin(theta), y1 - tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
+
+            //左辺
+            if (CheckCollisionDeterminationWithAllBench(
+                new Point(x1 + tolerance * Math.Sin(theta), y1 - tolerance * Math.Cos(theta)),
+                new Point(x1 - tolerance * Math.Sin(theta), y1 + tolerance * Math.Cos(theta)),
+                station))
+            {
+                return false;
+            }
+
 
             return true;
         }
@@ -244,7 +286,66 @@ namespace shoji_simulation
 
 
             }
+            return false;
+        }
 
+        //中央線
+        private static bool CheckCollisionDeterminationWithAllBench(Point r1, Point r2, StationLayoutParam station)
+        {
+            bool t1, t2;
+
+            foreach (var bench in station.Benchs)
+            {
+                //中央の線の上辺
+                var p1 = new Point(bench.PositionX - (bench.Width), bench.PositionY - (bench.Height / 2));
+                var p2 = new Point(bench.PositionX + (bench.Width), bench.PositionY - (bench.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //中央の線の右辺
+                p1 = new Point(bench.PositionX + (bench.Width), bench.PositionY - (bench.Height / 2));
+                p2 = new Point(bench.PositionX + (bench.Width), bench.PositionY + (bench.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //中央の線の下辺
+                p1 = new Point(bench.PositionX + (bench.Width), bench.PositionY + (bench.Height / 2));
+                p2 = new Point(bench.PositionX - (bench.Width), bench.PositionY + (bench.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+                //中央の線の左辺
+                p1 = new Point(bench.PositionX - (bench.Width), bench.PositionY + (bench.Height / 2));
+                p2 = new Point(bench.PositionX - (bench.Width), bench.PositionY - (bench.Height / 2));
+
+                t1 = CheckCollisionSide(r1, r2, p1, p2);
+                t2 = CheckCollisionSide(p1, p2, r1, r2);
+
+                if (t1 && t2)
+                {
+                    return true;
+                }
+
+
+            }
             return false;
         }
 
@@ -272,7 +373,7 @@ namespace shoji_simulation
             t1 = (r1.X - r2.X) * (p1.Y - r1.Y) + (r1.Y - r2.Y) * (r1.X - p1.X);
             t2 = (r1.X - r2.X) * (p2.Y - r1.Y) + (r1.Y - r2.Y) * (r1.X - p2.X);
 
-            if(t1 * t2 < 0)
+            if(t1 * t2 <= 0)
             {
                 return (true);
             }
@@ -281,5 +382,6 @@ namespace shoji_simulation
                 return (false);
             }
         }
+
     }
 }
